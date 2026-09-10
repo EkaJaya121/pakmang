@@ -8,11 +8,15 @@ const x_data = () => {
     correctUsername: "krakatau",
     correctPassword: "andover",
 
-    ipAddress: "https://jetson.andover.my.id",
+    ipAddress: "https://api.krakatauandover.my.id",
     // ipAddress: "http://192.168.0.112:5001",
-    port: "/dev/pixhawk",
-    baudrate: "9600",
     realtimeData: true,
+    
+    pollIntervals: {
+      context: 1000, // = CONFIG.POLL_INTERVALS.TELEMETRY
+      cameraRefresh: 1000, // = CONFIG.POLL_INTERVALS.SNAPSHOTS
+    },
+    contextFetchInProgress: false,
     currentDate: moment().format("YYYY-MM-DD"),
     currentTime: moment().format("HH:mm"),
 
@@ -35,25 +39,68 @@ const x_data = () => {
     },
 
     vehicleData: {
-      app_connect: false,
+      altitude: 0,
+      lat: 0,
+      lon: 0,
+
+      // Alias supaya kode lama tetap bisa menggunakan field ini
       alt: 0,
-      battery: 0,
+      long: 0,
+
+      course: null,
+      cog: null,
+
+      heading: null,
+      yaw: 0,
+
+      speed_mps: 0,
+      speed_kmh: 0,
+      speed_knots: 0,
+
+      // Alias lama
+      sog: 0,
+
+      gcs_active: false,
+      app_connect: false,
+
+      fix: false,
+      gps_valid: false,
+      gps_last_error: null,
+      gps_last_nmea: "",
+      gps_last_nmea_at: 0,
+      gps_reader_baud: 0,
+      gps_reader_port: "",
+      gps_reader_status: "",
+
+      hdop: 0,
+      satellites: 0,
+      gps_speed_mps: 0,
+
+      heartbeat_age: 0,
+
+      left_rpm: 0,
+      right_rpm: 0,
+      motor_data_age: 0,
+      motor_direction: "",
+      motor_speed_mps: 0,
+      motor_updated_at: 0,
+
+      session_id: "",
+      timestamp: "",
+
+      // Tetap dipertahankan kalau UI lama masih menggunakannya
       date: "",
+      time: "",
       is_armable: false,
       last_heartbeat: "",
-      lat: 0,
-      long: 0,
       mode: "",
       pitch: 0,
       roll: 0,
-      surface_camera_connect: true,
-      system_status: "",
-      time: "",
+
+      surface_camera_connect: false,
       underwater_camera_connect: false,
-      yaw: 0,
+
       current_wp: 0,
-      sog: 0,
-      cog: 0,
     },
 
     // GPS Tracker properties
@@ -84,74 +131,31 @@ const x_data = () => {
     async init() {
       // Inisialisasi GPS Tracker Canvas
       this.initGPSCanvas();
-      const gcsOK = await this.connectGcs();
-      if (!gcsOK) {
-        toastr.error("GCS not connected, GPS & cameras not started", "Error");
-      } else {
-        this.startGPSTracking();
-        try {
-          await this.startSurfaceCamera();
-        } catch (e) {
-          console.warn("Failed to start surface camera:", e.message);
-        }
-        try {
-          await this.startUnderwaterCamera();
-        } catch (e) {
-          console.warn("Failed to start underwater camera:", e.message);
-        }
+
+      // Langsung mulai GPS tracking & kamera tanpa handshake port/baudrate,
+      // mengikuti pola GCSApp.init(): CameraManager & GPSRenderer langsung
+      // dijalankan, status koneksi ditentukan dari hasil fetch data itu sendiri.
+      this.startGPSTracking();
+      try {
+        await this.startSurfaceCamera();
+      } catch (e) {
+        console.warn("Failed to start surface camera:", e.message);
       }
-      this.socket = io(this.ipAddress, {
-        transports: ["polling"],
-        path: "/socket.io/",
-      });
+      try {
+        await this.startUnderwaterCamera();
+      } catch (e) {
+        console.warn("Failed to start underwater camera:", e.message);
+      }
 
-      this.socket.on("connect", () => {
-        toastr.success("Connected to server WebSocket!");
-        this.vehicleData.app_connect = true;
-      });
+      // Polling data kendaraan via fetch (menggantikan socket.io + axios),
+      // mengikuti pola GPSData.fetch(): fetchInProgress guard + AbortController timeout.
+      this.fetchContext();
+      setInterval(() => this.fetchContext(), this.pollIntervals.context);
 
-      this.socket.on("disconnect", () => {
-        this.vehicleData.app_connect = false;
-        toastr.error("Lost WebSocket connection!");
-      });
-
-      this.socket.on("get_params", (data) => {
-        // Update live data
-        this.vehicleData = data;
-      });
-
-      // Jalankan loop update setiap 2 detik
-      setInterval(async () => {
-        try {
-          if (this.realtimeData) {
-            const response = await axios.get(`${this.ipAddress}/context`);
-            this.vehicleData = response.data.data;
-
-            // === Sinkronisasi status kamera dengan context server ===
-            if (this.vehicleData.surface_camera_connect) {
-              this.surfaceCamera.streamUrl = `${this.ipAddress}/camera/surface-stream?ts=${Date.now()}`;
-            } else {
-              this.surfaceCamera.streamUrl = "";
-            }
-
-            if (this.vehicleData.underwater_camera_connect) {
-              this.underwaterCamera.streamUrl = `${this.ipAddress}/camera/underwater-stream?ts=${Date.now()}`;
-            } else {
-              this.underwaterCamera.streamUrl = "";
-            }
-            const timestamp = new Date().getTime();
-            this.surfaceCamera.image = `${this.ipAddress}/camera/surface-latest?ts=${timestamp}`;
-            this.underwaterCamera.image = `${this.ipAddress}/camera/underwater-latest?ts=${timestamp}`;
-
-            // Update otomatis waypoint capture dan GPS
-            this.waypointCaptureSurfaceAuto();
-            this.waypointCaptureUnderwaterAuto();
-            this.updateGPSFromVehicle();
-          }
-        } catch (err) {
-          console.warn("Gagal ambil data context:", err.message);
-        }
-      }, 2000);
+      // Refresh snapshot terakhir secara berkala, terpisah dari polling context
+      // (mengikuti pola CameraManager.refreshLatestSnapshots()).
+      this.refreshLatestImages();
+      setInterval(() => this.refreshLatestImages(), this.pollIntervals.cameraRefresh);
 
       // Update jam dan tanggal
       setInterval(() => {
@@ -210,8 +214,6 @@ const x_data = () => {
       try {
         const response = await axios.post(`${this.ipAddress}/context`, {
           app_connect: true,
-          port: this.port,
-          baudrate: this.baudrate,
         });
         toastr.success("GCS connected successfully!", "Success");
         return true;
@@ -231,6 +233,135 @@ const x_data = () => {
         toastr.error("Failed to disconnect GCS", "Error");
       }
     },
+    async fetchContext() {
+      if (!this.realtimeData || this.contextFetchInProgress) return;
+
+      this.contextFetchInProgress = true;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
+
+      try {
+        const response = await fetch(`${this.ipAddress}/telemetry`, {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const payload = await response.json();
+
+        /*
+        * =========================================================
+        * NORMALISASI DATA API TELEMETRY
+        * =========================================================
+        */
+
+        this.vehicleData = {
+          ...payload,
+
+          // GPS
+          lat: payload.lat ?? 0,
+          lon: payload.lon ?? 0,
+
+          // Alias untuk kode lama
+          long: payload.lon ?? 0,
+
+          // Altitude
+          altitude: payload.altitude ?? 0,
+          alt: payload.altitude ?? 0,
+
+          // Heading
+          heading: payload.heading,
+          yaw: payload.heading ?? 0,
+
+          // Course
+          course: payload.course,
+          cog: payload.course ?? 0,
+
+          // Speed
+          speed_mps: payload.speed_mps ?? 0,
+          speed_kmh: payload.speed_kmh ?? 0,
+          speed_knots: payload.speed_knots ?? 0,
+
+          // Alias SOG lama
+          sog: payload.speed_knots ?? 0,
+
+          // GCS
+          gcs_active: payload.gcs_active ?? false,
+          app_connect: true,
+
+          // GPS status
+          fix: payload.fix ?? false,
+          gps_valid: payload.gps_valid ?? false,
+
+          // Field lama yang tidak tersedia di API
+          current_wp: this.vehicleData.current_wp ?? 0,
+
+          surface_camera_connect:
+            this.surfaceCamera.streamUrl !== "",
+
+          underwater_camera_connect:
+            this.underwaterCamera.streamUrl !== "",
+        };
+
+        /*
+        * =========================================================
+        * UPDATE GPS
+        * =========================================================
+        */
+
+        this.updateGPSFromVehicle();
+
+        /*
+        * =========================================================
+        * AUTO WAYPOINT CAPTURE
+        * =========================================================
+        *
+        * Hanya dijalankan jika current_wp memang tersedia
+        * dari backend.
+        */
+
+        if (
+          payload.current_wp !== undefined &&
+          payload.current_wp !== null
+        ) {
+          await this.waypointCaptureSurfaceAuto();
+          await this.waypointCaptureUnderwaterAuto();
+        }
+
+      } catch (error) {
+        console.warn(
+          "Gagal ambil data telemetry:",
+          error.message
+        );
+
+        this.vehicleData.app_connect = false;
+        this.vehicleData.gcs_active = false;
+
+      } finally {
+        clearTimeout(timeoutId);
+        this.contextFetchInProgress = false;
+      }
+    },
+    updateCameraConnectionState() {
+      this.surfaceCamera.streamUrl = this.vehicleData.surface_camera_connect
+        ? `${this.ipAddress}/surface_feed?ts=${Date.now()}`
+        : "";
+
+      this.underwaterCamera.streamUrl = this.vehicleData.underwater_camera_connect
+        ? `${this.ipAddress}/underwater_feed?ts=${Date.now()}`
+        : "";
+    },
+
+    refreshLatestImages() {
+      const timestamp = Date.now();
+      this.surfaceCamera.image = `${this.ipAddress}/api/latest-photo/surface?ts=${timestamp}`;
+      this.underwaterCamera.image = `${this.ipAddress}/api/latest-photo/underwater?ts=${timestamp}`;
+    },
 
     async saveSurfaceWaypoints() {
       if (this.surfaceCamera.waypointsText === "") {
@@ -239,7 +370,7 @@ const x_data = () => {
       }
       try {
         this.surfaceCamera.waypoints = this.surfaceCamera.waypointsText.split(" ");
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           surface_camera_waypoints: this.surfaceCamera.waypoints,
         });
         toastr.success("Waypoints for surface camera saved successfully!", "Success");
@@ -250,20 +381,22 @@ const x_data = () => {
 
     async startSurfaceCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
-          surface_camera_connect: true,
-        });
-        this.surfaceCamera.refreshStream += 1;
-        this.surfaceCamera.streamUrl = `${this.ipAddress}/camera/surface-stream?refresh=${this.surfaceCamera.refreshStream}`;
-        toastr.success("Surface camera started successfully!", "Success");
-      } catch (error) {
-        toastr.error("Failed to start surface camera", "Error");
-      }
+         this.surfaceCamera.streamUrl =
+          `${this.ipAddress}/surface_feed?ts=${Date.now()}`;
+
+        console.log("Surface stream:", this.surfaceCamera.streamUrl);
+
+        return true;
+        } catch (error) {
+          console.error("Failed to start surface camera:", error);
+          toastr.error("Failed to start surface camera", "Error");
+          return false;
+        }
     },
 
     async stopSurfaceCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           surface_camera_connect: false,
         });
         this.surfaceCamera.streamUrl = "";
@@ -277,7 +410,7 @@ const x_data = () => {
       try {
         const response = await axios.get(`${this.ipAddress}/camera/surface-capture`);
         this.surfaceCamera.refreshImage += 1;
-        this.surfaceCamera.image = `${this.ipAddress}/camera/surface-latest?refresh=${this.surfaceCamera.refreshImage}`;
+        this.surfaceCamera.image = `${this.ipAddress}/api/latest-photo/surface?refresh=${this.surfaceCamera.refreshImage}`;
         toastr.success("Image for surface camera captured successfully!", "Success");
       } catch (error) {
         toastr.error("Failed to capture surface image", "Error");
@@ -286,20 +419,21 @@ const x_data = () => {
 
     async startUnderwaterCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
-          underwater_camera_connect: true,
-        });
-        this.underwaterCamera.refreshStream += 1;
-        this.underwaterCamera.streamUrl = `${this.ipAddress}/camera/underwater-stream?refresh=${this.underwaterCamera.refreshStream}`;
-        toastr.success("Underwater camera started successfully!", "Success");
+        this.underwaterCamera.streamUrl =
+          `${this.ipAddress}/underwater_feed?ts=${Date.now()}`;
+
+        console.log("Underwater stream:", this.underwaterCamera.streamUrl);
+        return true;
       } catch (error) {
+        console.error("Failed to start underwater camera:", error);
         toastr.error("Failed to start underwater camera", "Error");
+        return false;
       }
     },
 
     async stopUnderwaterCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           underwater_camera_connect: false,
         });
         this.underwaterCamera.streamUrl = "";
@@ -316,7 +450,7 @@ const x_data = () => {
       }
       try {
         this.underwaterCamera.waypoints = this.underwaterCamera.waypointsText.split(" ");
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           underwater_camera_waypoints: this.underwaterCamera.waypoints,
         });
         toastr.success("Waypoints for underwater camera saved successfully!", "Success");
