@@ -8,7 +8,7 @@ const x_data = () => {
     correctUsername: "krakatau",
     correctPassword: "andover",
 
-    ipAddress: "https://jetson.andover.my.id",
+    ipAddress: "https://api.krakatauandover.my.id",
     // ipAddress: "http://192.168.0.112:5001",
     realtimeData: true,
 
