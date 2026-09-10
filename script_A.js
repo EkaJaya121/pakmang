@@ -385,15 +385,17 @@ const x_data = () => {
 
     async startSurfaceCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/telemetry`, {
-          surface_camera_connect: true,
-        });
-        this.surfaceCamera.refreshStream += 1;
-        this.surfaceCamera.streamUrl = `${this.ipAddress}/surface_feed?refresh=${this.surfaceCamera.refreshStream}`;
-        toastr.success("Surface camera started successfully!", "Success");
-      } catch (error) {
-        toastr.error("Failed to start surface camera", "Error");
-      }
+         this.surfaceCamera.streamUrl =
+          `${this.ipAddress}/surface_feed?ts=${Date.now()}`;
+
+        console.log("Surface stream:", this.surfaceCamera.streamUrl);
+
+        return true;
+        } catch (error) {
+          console.error("Failed to start surface camera:", error);
+          toastr.error("Failed to start surface camera", "Error");
+          return false;
+        }
     },
 
     async stopSurfaceCamera() {
@@ -421,14 +423,15 @@ const x_data = () => {
 
     async startUnderwaterCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/telemetry`, {
-          underwater_camera_connect: true,
-        });
-        this.underwaterCamera.refreshStream += 1;
-        this.underwaterCamera.streamUrl = `${this.ipAddress}/underwater_feed?refresh=${this.underwaterCamera.refreshStream}`;
-        toastr.success("Underwater camera started successfully!", "Success");
+        this.underwaterCamera.streamUrl =
+          `${this.ipAddress}/underwater_feed?ts=${Date.now()}`;
+
+        console.log("Underwater stream:", this.underwaterCamera.streamUrl);
+        return true;
       } catch (error) {
+        console.error("Failed to start underwater camera:", error);
         toastr.error("Failed to start underwater camera", "Error");
+        return false;
       }
     },
 
