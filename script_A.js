@@ -14,8 +14,8 @@ const x_data = () => {
 
     // Interval polling (menggantikan socket.io, mengikuti pola CONFIG.POLL_INTERVALS)
     pollIntervals: {
-      context: 2000,
-      cameraRefresh: 2000,
+      context: 1000, // = CONFIG.POLL_INTERVALS.TELEMETRY
+      cameraRefresh: 1000, // = CONFIG.POLL_INTERVALS.SNAPSHOTS
     },
     contextFetchInProgress: false,
     currentDate: moment().format("YYYY-MM-DD"),
@@ -232,11 +232,11 @@ const x_data = () => {
 
     updateCameraConnectionState() {
       this.surfaceCamera.streamUrl = this.vehicleData.surface_camera_connect
-        ? `${this.ipAddress}/camera_status/surface?ts=${Date.now()}`
+        ? `${this.ipAddress}/surface_feed?ts=${Date.now()}`
         : "";
 
       this.underwaterCamera.streamUrl = this.vehicleData.underwater_camera_connect
-        ? `${this.ipAddress}/camera_status/underwater?ts=${Date.now()}`
+        ? `${this.ipAddress}/underwater_feed?ts=${Date.now()}`
         : "";
     },
 
