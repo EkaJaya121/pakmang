@@ -170,7 +170,7 @@ const x_data = () => {
 
     async connectGcs() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           app_connect: true,
         });
         toastr.success("GCS connected successfully!", "Success");
@@ -183,7 +183,7 @@ const x_data = () => {
 
     async disconnectGcs() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           app_connect: false,
         });
         toastr.success("GCS disconnected successfully!", "Success");
@@ -253,7 +253,7 @@ const x_data = () => {
       }
       try {
         this.surfaceCamera.waypoints = this.surfaceCamera.waypointsText.split(" ");
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           surface_camera_waypoints: this.surfaceCamera.waypoints,
         });
         toastr.success("Waypoints for surface camera saved successfully!", "Success");
@@ -264,7 +264,7 @@ const x_data = () => {
 
     async startSurfaceCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           surface_camera_connect: true,
         });
         this.surfaceCamera.refreshStream += 1;
@@ -277,7 +277,7 @@ const x_data = () => {
 
     async stopSurfaceCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           surface_camera_connect: false,
         });
         this.surfaceCamera.streamUrl = "";
@@ -300,7 +300,7 @@ const x_data = () => {
 
     async startUnderwaterCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           underwater_camera_connect: true,
         });
         this.underwaterCamera.refreshStream += 1;
@@ -313,7 +313,7 @@ const x_data = () => {
 
     async stopUnderwaterCamera() {
       try {
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           underwater_camera_connect: false,
         });
         this.underwaterCamera.streamUrl = "";
@@ -330,7 +330,7 @@ const x_data = () => {
       }
       try {
         this.underwaterCamera.waypoints = this.underwaterCamera.waypointsText.split(" ");
-        const response = await axios.post(`${this.ipAddress}/context`, {
+        const response = await axios.post(`${this.ipAddress}/telemetry`, {
           underwater_camera_waypoints: this.underwaterCamera.waypoints,
         });
         toastr.success("Waypoints for underwater camera saved successfully!", "Success");
