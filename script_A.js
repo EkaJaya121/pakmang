@@ -40,25 +40,68 @@ const x_data = () => {
     },
 
     vehicleData: {
-      app_connect: false,
+      altitude: 0,
+      lat: 0,
+      lon: 0,
+
+      // Alias supaya kode lama tetap bisa menggunakan field ini
       alt: 0,
-      battery: 0,
+      long: 0,
+
+      course: null,
+      cog: null,
+
+      heading: null,
+      yaw: 0,
+
+      speed_mps: 0,
+      speed_kmh: 0,
+      speed_knots: 0,
+
+      // Alias lama
+      sog: 0,
+
+      gcs_active: false,
+      app_connect: false,
+
+      fix: false,
+      gps_valid: false,
+      gps_last_error: null,
+      gps_last_nmea: "",
+      gps_last_nmea_at: 0,
+      gps_reader_baud: 0,
+      gps_reader_port: "",
+      gps_reader_status: "",
+
+      hdop: 0,
+      satellites: 0,
+      gps_speed_mps: 0,
+
+      heartbeat_age: 0,
+
+      left_rpm: 0,
+      right_rpm: 0,
+      motor_data_age: 0,
+      motor_direction: "",
+      motor_speed_mps: 0,
+      motor_updated_at: 0,
+
+      session_id: "",
+      timestamp: "",
+
+      // Tetap dipertahankan kalau UI lama masih menggunakannya
       date: "",
+      time: "",
       is_armable: false,
       last_heartbeat: "",
-      lat: 0,
-      long: 0,
       mode: "",
       pitch: 0,
       roll: 0,
-      surface_camera_connect: true,
-      system_status: "",
-      time: "",
+
+      surface_camera_connect: false,
       underwater_camera_connect: false,
-      yaw: 0,
+
       current_wp: 0,
-      sog: 0,
-      cog: 0,
     },
 
     // GPS Tracker properties
@@ -195,6 +238,7 @@ const x_data = () => {
     // ===================== Data Fetching (pola fetch, bukan axios/socket.io) =====================
     async fetchContext() {
       if (!this.realtimeData || this.contextFetchInProgress) return;
+
       this.contextFetchInProgress = true;
 
       const controller = new AbortController();
@@ -207,23 +251,100 @@ const x_data = () => {
           signal: controller.signal,
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
 
         const payload = await response.json();
-        // Endpoint /telemetry mengembalikan data langsung (flat), tidak dibungkus
-        // key "data" seperti /context sebelumnya — mengikuti pola GPSData.fetch().
-        this.vehicleData = payload;
-        this.vehicleData.app_connect = true;
 
-        this.updateCameraConnectionState();
+        /*
+        * =========================================================
+        * NORMALISASI DATA API TELEMETRY
+        * =========================================================
+        */
 
-        // Update otomatis waypoint capture dan GPS
-        this.waypointCaptureSurfaceAuto();
-        this.waypointCaptureUnderwaterAuto();
+        this.vehicleData = {
+          ...payload,
+
+          // GPS
+          lat: payload.lat ?? 0,
+          lon: payload.lon ?? 0,
+
+          // Alias untuk kode lama
+          long: payload.lon ?? 0,
+
+          // Altitude
+          altitude: payload.altitude ?? 0,
+          alt: payload.altitude ?? 0,
+
+          // Heading
+          heading: payload.heading,
+          yaw: payload.heading ?? 0,
+
+          // Course
+          course: payload.course,
+          cog: payload.course ?? 0,
+
+          // Speed
+          speed_mps: payload.speed_mps ?? 0,
+          speed_kmh: payload.speed_kmh ?? 0,
+          speed_knots: payload.speed_knots ?? 0,
+
+          // Alias SOG lama
+          sog: payload.speed_knots ?? 0,
+
+          // GCS
+          gcs_active: payload.gcs_active ?? false,
+          app_connect: true,
+
+          // GPS status
+          fix: payload.fix ?? false,
+          gps_valid: payload.gps_valid ?? false,
+
+          // Field lama yang tidak tersedia di API
+          current_wp: this.vehicleData.current_wp ?? 0,
+
+          surface_camera_connect:
+            this.surfaceCamera.streamUrl !== "",
+
+          underwater_camera_connect:
+            this.underwaterCamera.streamUrl !== "",
+        };
+
+        /*
+        * =========================================================
+        * UPDATE GPS
+        * =========================================================
+        */
+
         this.updateGPSFromVehicle();
+
+        /*
+        * =========================================================
+        * AUTO WAYPOINT CAPTURE
+        * =========================================================
+        *
+        * Hanya dijalankan jika current_wp memang tersedia
+        * dari backend.
+        */
+
+        if (
+          payload.current_wp !== undefined &&
+          payload.current_wp !== null
+        ) {
+          await this.waypointCaptureSurfaceAuto();
+          await this.waypointCaptureUnderwaterAuto();
+        }
+
       } catch (error) {
-        console.warn("Gagal ambil data context:", error.message);
+        console.warn(
+          "Gagal ambil data telemetry:",
+          error.message
+        );
+
         this.vehicleData.app_connect = false;
+        this.vehicleData.gcs_active = false;
+
       } finally {
         clearTimeout(timeoutId);
         this.contextFetchInProgress = false;
@@ -855,7 +976,7 @@ const x_data = () => {
 
     updateGPSFromVehicle() {
       const lat = this.vehicleData.lat;
-      const lon = this.vehicleData.long;
+      const lon = this.vehicleData.lon;
 
       // Skip jika data GPS tidak valid atau tracking tidak aktif
       if (!this.gpsTracker.isTracking) return;
@@ -866,7 +987,7 @@ const x_data = () => {
 
     updateGPSPosition() {
       const lat = this.vehicleData.lat;
-      const lon = this.vehicleData.long;
+      const lon = this.vehicleData.lon;
       if (!lat || !lon || lat === 0 || lon === 0) return;
 
       const timestamp = Date.now();
