@@ -201,7 +201,7 @@ const x_data = () => {
       const timeoutId = setTimeout(() => controller.abort(), 4500);
 
       try {
-        const response = await fetch(`${this.ipAddress}/context`, {
+        const response = await fetch(`${this.ipAddress}/telemetry`, {
           method: "GET",
           cache: "no-store",
           signal: controller.signal,
@@ -210,7 +210,9 @@ const x_data = () => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const payload = await response.json();
-        this.vehicleData = payload.data;
+        // Endpoint /telemetry mengembalikan data langsung (flat), tidak dibungkus
+        // key "data" seperti /context sebelumnya — mengikuti pola GPSData.fetch().
+        this.vehicleData = payload;
         this.vehicleData.app_connect = true;
 
         this.updateCameraConnectionState();
