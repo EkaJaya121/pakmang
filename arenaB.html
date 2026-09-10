@@ -1,184 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Krakatau Andover Dashboard</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.6/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRAKATAU ANDOVER - GCS Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="retrocss.css">
 </head>
-
-<body x-data="x_data()" x-init="init()">
-    <!-- HEADER -->
-    <div class="page-container">
-        <!-- HEADER -->
-        <div class="desktop">
-            <div class="retro-window">
-                <div class="retro-titlebar">
-                    <div class="logo-text-box">
-                        <img src="/img/UNIVERSITASTEKNOKRAT.png" alt="logo" class="logo-header me-2"></img>
-                        <h6 class="text-retro">UNIVERSITAS TEKNOKRAT INDONESIA</h6>
-                    </div>
-                    <div class="retro-window-buttons">
-                        <span class="retro-btn retro-btn-min"></span>
-                        <span class="retro-btn retro-btn-max"></span>
-                        <span class="retro-btn retro-btn-close"></span>
-                        <template x-if="vehicleData.app_connect">
-                            <span class="status-connected"><i class="text-retro">CONNECTED</i></span>
-                        </template>
-                        <template x-if="!vehicleData.app_connect">
-                            <span class="status-disconnected"><i class="text-retro">DISCONNECTED</i></span>
-                        </template>
-                    </div>
-                    <div class="logo-text-box">
-                        <i class="text-retro" x-text="currentTime"></i>
-                        <i class="text-retro">/</i>
-                        <i class="text-retro" x-text="currentDate"></i>
-                    </div>
-                </div>
-                <div class="retro-body">
-                    <div class="page-container">
-                        <div class="header">
-                            <div>
-                                <span class="logo-text-box">
-                                    <img src="/img/andover.png" alt="logo" class="logo-header-and me-2"></img>
-                                    <h6 class="text-retro2">KRAKATAU ANDOVER - LINTASAN B</h6>
-                                </span>
-                            </div>
-                            <div class="icon-grid">
-                                <!-- Box 1 -->
-                                <div class="card-custom p-3">
-                                    <div class="text-retro2">SURFACE CAMERA STREAM</div>
-                                    <div class="card-body-flex">
-                                        <img :key="surfaceCamera.refreshStream" class="image-placeholder image-fill"
-                                            :src="surfaceCamera.streamUrl" alt="Surface Camera" />
-                                    </div>
-
-                                </div>
-
-                                <!-- Box 2 -->
-                                <div class="card-custom p-3">
-
-                                    <div class="text-retro2">GPS TRAJECTORY
-                                    </div>
-                                    <div id="canvasContainer">
-                                        <canvas id="gpsCanvas" width="300" height="300"></canvas>
-                                    </div>
-                                    <div class="text-center mt-3">
-                                        <button @click="clearGPSPath()" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash me-1"></i>CLEAR
-                                        </button>
-                                    </div>
-
-                                </div>
-
-                                <!-- Box 3 -->
-                                <div class="card-custom p-3">
-
-                                    <div class="text-retro2">UNDERWATER CAMERA STREAM
-                                    </div>
-                                    <div class="card-body-flex">
-                                        <img class="image-placeholder image-fill" :src="underwaterCamera.streamUrl"
-                                            alt="Underwater Camera" />
-                                    </div>
-
-                                </div>
-
-                                <!-- Box 4 -->
-                                <div class="card-custom p-3">
-
-                                    <div class="text-retro2">SURFACE IMAGE</div>
-                                    <img class="image-placeholder" :src="surfaceCamera.image" alt="Surface Image" />
-
-                                </div>
-
-                                <!-- Box 5 -->
-                                <div class="card-custom p-3">
-                                    <div class="text-retro2">
-                                        VEHICLE DATA
-                                    </div>
-
-                                    <div class="vehicle-data">
-                                        <br>
-                                        <!-- BOX 1: Attitude Information -->
-                                        <div class="icon">
-                                            <div class="vehicle-section-title BOLD">
-                                                Attitude Information
-                                            </div>
-
-                                            <div class="vehicle-row">
-                                                <span class="vehicle-label">Speed Over Ground</span>
-                                                <span class="vehicle-value">
-                                                    <span
-                                                        x-text="vehicleData.sog ? vehicleData.sog.toFixed(2) : '0.00'"></span>
-                                                    <span class="vehicle-unit"> m/s</span>
-                                                </span>
-                                            </div>
-
-                                            <div class="vehicle-row">
-                                                <span class="vehicle-label">Course Over Ground</span>
-                                                <span class="vehicle-value">
-                                                    <span
-                                                        x-text="vehicleData.cog ? vehicleData.cog.toFixed(2) : '0.00'"></span>
-                                                    <span class="vehicle-unit"> °</span>
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <!-- BOX 2: Coordinate Information -->
-
-
-
-                                        <div class="vehicle-row">
-                                            <span class="vehicle-label">Latitude</span>
-                                            <span class="vehicle-value">
-                                                <span
-                                                    x-text="vehicleData.lat ? vehicleData.lat.toFixed(6) : '0.000000'"></span>
-                                                <span class="vehicle-unit"> °</span>
-                                            </span>
-                                        </div>
-
-                                        <div class="vehicle-row">
-                                            <span class="vehicle-label">Longitude</span>
-                                            <span class="vehicle-value">
-                                                <span
-                                                    x-text="vehicleData.long ? vehicleData.long.toFixed(6) : '0.000000'"></span>
-                                                <span class="vehicle-unit"> °</span>
-                                            </span>
-                                        </div>
-
-
-                                    </div>
-                                </div>
-
-                                <!-- Box 6 -->
-                                <div class="card-custom p-3">
-
-                                    <div class="text-retro2">UNDERWATER IMAGE</div>
-                                    <img class="image-placeholder" :src="underwaterCamera.image"
-                                        alt="Underwater Image" />
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.8/cdn.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.8/axios.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="script_B.js"></script>
+<body class="dashboard-page" x-data="x_data()" x-init="init()">
+    <div class="liquid-bg" aria-hidden="true"><span></span><span></span><span></span></div>
+    <header class="dashboard-header">
+        <div class="header-left"><div class="header-logos">
+            <div class="logo-wrap"><img src="img/UNIVERSITASTEKNOKRAT.png" alt="UTI"></div>
+            <div class="logo-wrap andover-wrap"><img src="img/andover.png" alt="Andover"></div>
+        </div><div class="header-title"><h1>KRAKATAU ANDOVER</h1><p>Universitas Teknokrat Indonesia</p></div></div>
+        <div class="header-right"><div class="header-readouts">
+            <time class="header-clock" x-text="currentDate + ' / ' + currentTime">--:--:--</time>
+            <span class="header-coordinates" x-text="vehicleData.lat.toFixed(6) + ' / ' + vehicleData.lon.toFixed(6)">--</span>
+        </div><span class="badge-lane">LANE B</span><a href="index.html" class="back-button">&larr; PILIH LINTASAN</a></div>
+    </header>
+    <main class="dashboard-grid">
+        <section class="panel glass"><div class="panel-header">SURFACE CAMERA STREAM <span class="camera-status" :class="vehicleData.surface_camera_connect ? 'online' : 'offline'"><span class="dot"></span><span x-text="vehicleData.surface_camera_connect ? 'ONLINE' : 'OFFLINE'"></span></span></div><div class="panel-body"><div class="camera-stream-container"><div class="camera-video-wrapper video-5-4"><img x-show="surfaceCamera.streamUrl" x-on:error="$el.style.display='none'; $el.nextElementSibling.style.display='flex'" class="camera-video" :src="surfaceCamera.streamUrl" alt="Surface Camera"><div class="camera-placeholder" x-show="!surfaceCamera.streamUrl"><span class="camera-error">CAMERA OFFLINE</span><span class="sub-text">Waiting for video stream...</span></div></div></div></div></section>
+        <section class="panel glass"><div class="panel-header centered-header">GPS TRAJECTORY</div><div class="panel-body"><canvas id="gpsCanvas" class="gps-canvas" width="600" height="600"></canvas></div></section>
+        <section class="panel glass"><div class="panel-header">UNDERWATER CAMERA STREAM <span class="camera-status" :class="vehicleData.underwater_camera_connect ? 'online' : 'offline'"><span class="dot"></span><span x-text="vehicleData.underwater_camera_connect ? 'ONLINE' : 'OFFLINE'"></span></span></div><div class="panel-body"><div class="camera-stream-container"><div class="camera-video-wrapper video-3-4"><img x-show="underwaterCamera.streamUrl" x-on:error="$el.style.display='none'; $el.nextElementSibling.style.display='flex'" class="camera-video" :src="underwaterCamera.streamUrl" alt="Underwater Camera"><div class="camera-placeholder" x-show="!underwaterCamera.streamUrl"><span class="camera-error">CAMERA OFFLINE</span><span class="sub-text">Waiting for video stream...</span></div></div></div></div></section>
+        <section class="panel glass"><div class="panel-header centered-header">SURFACE IMAGE</div><div class="panel-body"><div class="snapshot-placeholder video-5-4"><img x-show="surfaceCamera.image" x-on:error="$el.style.display='none'; $el.nextElementSibling.style.display='block'" :src="surfaceCamera.image" alt="Surface Image"><span class="snapshot-state" x-show="!surfaceCamera.image">Menunggu foto surface...</span></div></div></section>
+        <section class="panel glass"><div class="panel-header centered-header">VEHICLE DATA</div><div class="panel-body"><div class="vehicle-data"><div class="data-section"><h3>ATTITUDE</h3><div class="data-row"><span>Speed Over Ground</span><strong x-text="vehicleData.sog ? vehicleData.sog.toFixed(2) + ' m/s' : '--'"></strong></div><div class="data-row"><span>Course Over Ground</span><strong x-text="vehicleData.cog ? vehicleData.cog.toFixed(2) + ' deg' : '--'"></strong></div></div><hr><div class="data-section"><h3>COORDINATES</h3><div class="data-row"><span>Latitude</span><strong x-text="vehicleData.lat ? vehicleData.lat.toFixed(6) : '--'"></strong></div><div class="data-row"><span>Longitude</span><strong x-text="vehicleData.lon ? vehicleData.lon.toFixed(6) : '--'"></strong></div></div></div></div></section>
+        <section class="panel glass"><div class="panel-header centered-header">UNDERWATER IMAGE</div><div class="panel-body"><div class="snapshot-placeholder video-3-4"><img x-show="underwaterCamera.image" x-on:error="$el.style.display='none'; $el.nextElementSibling.style.display='block'" :src="underwaterCamera.image" alt="Underwater Image"><span class="snapshot-state" x-show="!underwaterCamera.image">Menunggu foto underwater...</span></div></div></section>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script><script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.14.8/cdn.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.8/axios.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script><script src="script_B.js"></script>
 </body>
-
 </html>

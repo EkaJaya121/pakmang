@@ -643,7 +643,7 @@ const x_data = () => {
         this.gpsTracker.shipImageLoaded = true;
         this.drawGPSCanvas(); // redraw setelah gambar siap
       };
-      this.gpsTracker.shipImage.src = "/img/kapal.png";
+      this.gpsTracker.shipImage.src = "img/kapal.png";
       this.drawGPSCanvas();
       console.log("GPS Tracker initialized - Canvas size:", size);
 

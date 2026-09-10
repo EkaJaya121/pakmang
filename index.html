@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8" />
@@ -11,45 +11,37 @@
     <link rel="stylesheet" href="retrocss.css">
 </head>
 
-<body>
-    <div class="page-container">
-        <div class="desktop">
-            <div class="retro-window">
-                <div class="retro-titlebar">
-                    <span></span>KRAKARTAU ANDOVER DASHBOARD
+<body class="landing-page">
+    <div class="liquid-bg" aria-hidden="true"></div>
+    <main class="landing-container">
+        <section class="landing-card glass" aria-labelledby="lane-heading">
+            <div class="landing-logos">
+                <div class="logo-wrapper glass">
+                    <img src="img/UNIVERSITASTEKNOKRAT.png" alt="Universitas Teknokrat Indonesia">
                 </div>
-                <div class="retro-body">
-                    <div class="page-container">
-                        <div class="header">
-                            <div class="icon-grid content">
-                                <div class="content"><span class="icon text-center BOLD">WELCOME TO KRAKATAU ANDOVER DASHBOARD</span></div>
-                                
-                                <div class="card-custom content">
-
-                                    <div class="welcome-box">
-                                        <br>
-                                        <div class="card-custom">
-                                            <a href="arenaA.html" class="btn btn-menu btn-admin">
-                                                <i class="fas fa-laptop-house icon-menu"></i>LINTASAN: A
-                                            </a>
-                                        </div>
-                                        <br>
-                                        <div class="card-custom">
-
-                                            <a href="arenaB.html" class="btn btn-menu btn-monitoring">
-                                                <i class="fas fa-laptop-house icon-menu"></i>LINTASAN: B
-                                            </a>
-                                        </div>
-                                        <br>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
+                <div class="logo-wrapper img-andover glass">
+                    <img src="img/andover.png" alt="Krakatau Andover">
                 </div>
             </div>
-        </div>
+            <header class="landing-header">
+                <h1>KRAKATAU ANDOVER</h1>
+                <p>Ground Control Station</p>
+            </header>
+            <div class="lane-form">
+                <h2 id="lane-heading">Pilih Lintasan</h2>
+                <div class="lane-options">
+                    <a href="arenaA.html" class="lane-btn">
+                        <i class="fas fa-water" aria-hidden="true"></i>
+                        <span>LINTASAN A</span>
+                    </a>
+                    <a href="arenaB.html" class="lane-btn">
+                        <i class="fas fa-water" aria-hidden="true"></i>
+                        <span>LINTASAN B</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.6/js/bootstrap.bundle.min.js"></script>
 </body>
