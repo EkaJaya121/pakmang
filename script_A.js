@@ -232,18 +232,18 @@ const x_data = () => {
 
     updateCameraConnectionState() {
       this.surfaceCamera.streamUrl = this.vehicleData.surface_camera_connect
-        ? `${this.ipAddress}/camera/surface-stream?ts=${Date.now()}`
+        ? `${this.ipAddress}/camera_status/surface?ts=${Date.now()}`
         : "";
 
       this.underwaterCamera.streamUrl = this.vehicleData.underwater_camera_connect
-        ? `${this.ipAddress}/camera/underwater-stream?ts=${Date.now()}`
+        ? `${this.ipAddress}/camera_status/underwater?ts=${Date.now()}`
         : "";
     },
 
     refreshLatestImages() {
       const timestamp = Date.now();
-      this.surfaceCamera.image = `${this.ipAddress}/camera/surface-latest?ts=${timestamp}`;
-      this.underwaterCamera.image = `${this.ipAddress}/camera/underwater-latest?ts=${timestamp}`;
+      this.surfaceCamera.image = `${this.ipAddress}/api/latest-photo/surface?ts=${timestamp}`;
+      this.underwaterCamera.image = `${this.ipAddress}/api/latest-photo/underwater?ts=${timestamp}`;
     },
 
     async saveSurfaceWaypoints() {
@@ -268,7 +268,7 @@ const x_data = () => {
           surface_camera_connect: true,
         });
         this.surfaceCamera.refreshStream += 1;
-        this.surfaceCamera.streamUrl = `${this.ipAddress}/camera/surface-stream?refresh=${this.surfaceCamera.refreshStream}`;
+        this.surfaceCamera.streamUrl = `${this.ipAddress}/surface_feed?refresh=${this.surfaceCamera.refreshStream}`;
         toastr.success("Surface camera started successfully!", "Success");
       } catch (error) {
         toastr.error("Failed to start surface camera", "Error");
@@ -291,7 +291,7 @@ const x_data = () => {
       try {
         const response = await axios.get(`${this.ipAddress}/camera/surface-capture`);
         this.surfaceCamera.refreshImage += 1;
-        this.surfaceCamera.image = `${this.ipAddress}/camera/surface-latest?refresh=${this.surfaceCamera.refreshImage}`;
+        this.surfaceCamera.image = `${this.ipAddress}/api/latest-photo/surface?refresh=${this.surfaceCamera.refreshImage}`;
         toastr.success("Image for surface camera captured successfully!", "Success");
       } catch (error) {
         toastr.error("Failed to capture surface image", "Error");
@@ -304,7 +304,7 @@ const x_data = () => {
           underwater_camera_connect: true,
         });
         this.underwaterCamera.refreshStream += 1;
-        this.underwaterCamera.streamUrl = `${this.ipAddress}/camera/underwater-stream?refresh=${this.underwaterCamera.refreshStream}`;
+        this.underwaterCamera.streamUrl = `${this.ipAddress}/underwater_feed?refresh=${this.underwaterCamera.refreshStream}`;
         toastr.success("Underwater camera started successfully!", "Success");
       } catch (error) {
         toastr.error("Failed to start underwater camera", "Error");
