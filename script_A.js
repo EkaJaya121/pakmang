@@ -11,7 +11,7 @@ const x_data = () => {
     ipAddress: "https://api.krakatauandover.my.id",
     // ipAddress: "http://192.168.0.112:5001",
     realtimeData: true,
-
+    
     // Interval polling (menggantikan socket.io, mengikuti pola CONFIG.POLL_INTERVALS)
     pollIntervals: {
       context: 1000, // = CONFIG.POLL_INTERVALS.TELEMETRY
@@ -385,17 +385,17 @@ const x_data = () => {
 
     async startSurfaceCamera() {
       try {
-         this.surfaceCamera.streamUrl =
+        this.surfaceCamera.streamUrl =
           `${this.ipAddress}/surface_feed?ts=${Date.now()}`;
 
         console.log("Surface stream:", this.surfaceCamera.streamUrl);
 
         return true;
-        } catch (error) {
-          console.error("Failed to start surface camera:", error);
-          toastr.error("Failed to start surface camera", "Error");
-          return false;
-        }
+      } catch (error) {
+        console.error("Failed to start surface camera:", error);
+        toastr.error("Failed to start surface camera", "Error");
+        return false;
+      }
     },
 
     async stopSurfaceCamera() {
@@ -907,17 +907,25 @@ const x_data = () => {
     drawOrigin() {
       const ctx = this.gpsTracker.ctx;
       const origin = this.xyToCanvas(0, 0);
-      ctx.fillStyle = "#ff0000";
-      ctx.beginPath();
-      ctx.arc(origin.canvasX, origin.canvasY, 4, 0, 2 * Math.PI);
-      ctx.fill();
-      // const size = this.gpsTracker.shipImageSize;
-      // ctx.save();
-      // ctx.translate(origin.canvasX, origin.canvasY);
-      // // kalau mau bisa ditambah rotate di sini:
-      // // ctx.rotate(angleRad);
-      // ctx.drawImage(this.gpsTracker.shipImage, -size / 2, -size / 2, size, size);
-      // ctx.restore();
+
+      if (this.gpsTracker.shipImageLoaded) {
+        const size = this.gpsTracker.shipImageSize;
+        // Ambil nilai heading kompas (derajat) lalu ubah ke radian
+        const headingDeg = this.vehicleData.heading ?? 0;
+        const headingRad = (headingDeg * Math.PI) / 180;
+
+        ctx.save();
+        ctx.translate(origin.canvasX, origin.canvasY); // Pindahkan titik koordinat ke pusat kapal
+        ctx.rotate(headingRad);                         // Memutar gambar sesuai kompas
+        ctx.drawImage(this.gpsTracker.shipImage, -size / 2, -size / 2, size, size);
+        ctx.restore();                                  // Reset konteks rotasi canvas
+      } else {
+        // Fallback titik merah jika gambar belum siap
+        ctx.fillStyle = "#ff0000";
+        ctx.beginPath();
+        ctx.arc(origin.canvasX, origin.canvasY, 4, 0, 2 * Math.PI);
+        ctx.fill();
+      }
     },
 
     drawPath() {
@@ -945,11 +953,8 @@ const x_data = () => {
 
         if (isLast) {
           // compute heading angle from previous point if available
-          let angle = 0;
-          if (path.length > 1) {
-            const prev = path[path.length - 2];
-            angle = Math.atan2(p.canvasY - prev.canvasY, p.canvasX - prev.canvasX);
-          }
+          const headingDeg = this.vehicleData.heading ?? 0;
+          const angle = (headingDeg * Math.PI) / 180;
 
           // draw ship
           this.drawShip(ctx, p.canvasX, p.canvasY, angle, 8);
