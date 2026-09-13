@@ -11,7 +11,7 @@ const x_data = () => {
         ipAddress: "https://api.krakatauandover.my.id",
         // ipAddress: "http://192.168.0.112:5001",
         realtimeData: true,
-
+        
     // Interval polling (menggantikan socket.io, mengikuti pola CONFIG.POLL_INTERVALS)
     pollIntervals: {
             context: 1000, // = CONFIG.POLL_INTERVALS.TELEMETRY
@@ -671,15 +671,12 @@ const x_data = () => {
         },
 
         xyToCanvas(x, y) {
-            const originCanvasX = 490;
+            const originCanvasX = 490; // Titik awal kapal saat tracking mulai
             const originCanvasY = 450;
-            const theta = (245 * Math.PI) / 180; // Rotasi sudut lapangan 245 derajat
 
-            const xr = x * Math.cos(theta) - y * Math.sin(theta);
-            const yr = x * Math.sin(theta) + y * Math.cos(theta);
-
-            const canvasX = originCanvasX + xr * this.gpsTracker.pixelsPerMeter;
-            const canvasY = originCanvasY - yr * this.gpsTracker.pixelsPerMeter;
+            // x = Timur (Longitude), y = Utara (Latitude)
+            const canvasX = originCanvasX + x * this.gpsTracker.pixelsPerMeter;
+            const canvasY = originCanvasY - y * this.gpsTracker.pixelsPerMeter; // Dikurang agar maju ke atas
 
             return { canvasX, canvasY };
         },
@@ -906,9 +903,9 @@ const x_data = () => {
 
         drawOrigin() {
             const ctx = this.gpsTracker.ctx;
-
-            // Ambil posisi kapal paling baru dari ujung path
             const path = this.gpsTracker.path;
+
+            // 1. Kapal digambar di posisi GPS paling baru (ujung jalur)
             let currentPos = this.xyToCanvas(0, 0);
             if (path.length > 0) {
                 const lastPoint = path[path.length - 1];
@@ -919,9 +916,8 @@ const x_data = () => {
                 const size = this.gpsTracker.shipImageSize;
                 const headingDeg = this.vehicleData.heading ?? 0;
 
-                // RUMUS OPSI B: (Heading Kompas - Sudut Lapangan 245°)
-                // Jika moncong gambar kapal aslinya menghadap ke ATAS, gunakan rumus ini:
-                const headingRad = ((headingDeg - 245 -90) * Math.PI) / 180;
+                // 2. Putar gambar kapal sesuai heading kompas (0 deg = Utara/Atas)
+                const headingRad = (headingDeg * Math.PI) / 180;
 
                 ctx.save();
                 ctx.translate(currentPos.canvasX, currentPos.canvasY);
