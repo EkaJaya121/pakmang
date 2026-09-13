@@ -11,7 +11,7 @@ const x_data = () => {
         ipAddress: "https://api.krakatauandover.my.id",
         // ipAddress: "http://192.168.0.112:5001",
         realtimeData: true,
-        
+
     // Interval polling (menggantikan socket.io, mengikuti pola CONFIG.POLL_INTERVALS)
     pollIntervals: {
             context: 1000, // = CONFIG.POLL_INTERVALS.TELEMETRY
@@ -921,7 +921,7 @@ const x_data = () => {
 
                 // RUMUS OPSI B: (Heading Kompas - Sudut Lapangan 245°)
                 // Jika moncong gambar kapal aslinya menghadap ke ATAS, gunakan rumus ini:
-                const headingRad = ((headingDeg - 245) * Math.PI) / 180;
+                const headingRad = ((headingDeg - 245 -90) * Math.PI) / 180;
 
                 ctx.save();
                 ctx.translate(currentPos.canvasX, currentPos.canvasY);
