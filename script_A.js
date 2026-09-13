@@ -917,7 +917,7 @@ const x_data = () => {
                 const headingDeg = this.vehicleData.heading ?? 0;
 
                 // 2. Putar gambar kapal sesuai heading kompas (0 deg = Utara/Atas)
-                const headingRad = ((headingDeg + 180) * Math.PI) / 180;
+                const headingRad = ((headingDeg + 90) * Math.PI) / 90;
 
                 ctx.save();
                 ctx.translate(currentPos.canvasX, currentPos.canvasY);
