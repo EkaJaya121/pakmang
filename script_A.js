@@ -295,14 +295,18 @@ const x_data = () => {
 
           // GCS
           gcs_active: payload.gcs_active ?? false,
-          app_connect: true,
+          // FIX: jangan hardcode true, ambil dari payload kalau backend mengirimnya,
+          // fallback ke state lama supaya connectGcs()/disconnectGcs() tidak langsung ketimpa
+          app_connect: payload.app_connect ?? this.vehicleData.app_connect ?? false,
 
           // GPS status
           fix: payload.fix ?? false,
           gps_valid: payload.gps_valid ?? false,
 
-          // Field lama yang tidak tersedia di API
-          current_wp: this.vehicleData.current_wp ?? 0,
+          // FIX: ambil current_wp dari payload dulu, baru fallback ke state lama.
+          // Sebelumnya field ini selalu diisi dari state lama saja sehingga
+          // tidak pernah ter-update dari backend, dan auto-capture waypoint jadi tidak berjalan.
+          current_wp: payload.current_wp ?? this.vehicleData.current_wp ?? 0,
 
           surface_camera_connect:
             this.surfaceCamera.streamUrl !== "",
@@ -1113,6 +1117,9 @@ const x_data = () => {
             if (!this.vehicleData.lat || this.vehicleData.lat === 0) {
               console.log("Using browser GPS as fallback");
               this.vehicleData.lat = pos.coords.latitude;
+              // FIX: sebelumnya cuma menulis ke .long, padahal gpsToLocalXY/updateGPSPosition
+              // membaca .lon — jadi fallback longitude tidak pernah kepakai. Sekarang tulis keduanya.
+              this.vehicleData.lon = pos.coords.longitude;
               this.vehicleData.long = pos.coords.longitude;
             }
           },
